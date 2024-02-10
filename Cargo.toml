@@ -1,0 +1,21 @@
+[package]
+name = "fexpr"
+version = "0.1.1"
+edition = "2021"
+license = "BSD-3-Clause"
+description = "Simple filter query language parser so that you can build SQL, Elasticsearch, etc. queries safely from user input."
+repository = "https://github.com/mnaufalhilmym/fexpr"
+readme = "README.md"
+keywords = ["fexpr", "parser", "text", "string", "language"]
+categories = ["parser-implementations", "parsing"]
+
+
+[dependencies]
+once_cell = "1.19.0"
+regex = "1.10.3"
+
+
+[lints.rust]
+unsafe_code = "forbid"
+unused_crate_dependencies = "forbid"
+unused_imports = "deny"
