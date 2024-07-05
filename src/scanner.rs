@@ -211,7 +211,7 @@ impl Scanner {
 
         if is_text_start_char(ch) {
             self.unread();
-            return self.scan_text();
+            return self.scan_text(false);
         }
 
         if is_sign_start_char(ch) {
@@ -325,7 +325,7 @@ impl Scanner {
     }
 
     // scanText consumes all contiguous quoted text chars.
-    fn scan_text(&mut self) -> Result<Token, Error> {
+    fn scan_text(&mut self, preserve_quotes: bool) -> Result<Token, Error> {
         let mut buf = bytes::Buffer::new();
 
         // read the first char to determine the quotes type
@@ -359,7 +359,7 @@ impl Scanner {
 
         if !has_matching_quotes {
             return Err(Error::Invalid(format!("Invalid quoted text {literal}")));
-        } else {
+        } else if !preserve_quotes {
             // unquote
             literal = literal[1..literal.len() - 1].to_string();
             // remove escaped quotes prefix (aka. \)
@@ -454,10 +454,9 @@ impl Scanner {
                 buf.write_char(ch)?;
             } else if is_text_start_char(ch) {
                 self.unread();
-                let t = self.scan_text()?;
+                let t = self.scan_text(true)?; // with quotes to preserve the exact text start/end runes
 
-                // quote the literal to preserve the text start/end chars
-                buf.write_string(&("\"".to_owned() + &t.literal() + "\""))?
+                buf.write_string(&t.literal())?
             } else if ch == ')' {
                 open_groups -= 1;
 

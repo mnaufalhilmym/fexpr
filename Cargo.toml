@@ -1,6 +1,6 @@
 [package]
 name = "fexpr"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 license = "BSD-3-Clause"
 description = "Simple filter query language parser so that you can build SQL, Elasticsearch, etc. queries safely from user input."
@@ -11,8 +11,8 @@ categories = ["parser-implementations", "parsing"]
 
 
 [dependencies]
-once_cell = "1.19.0"
-regex = "1.10.3"
+once_cell = "1"
+regex = "1"
 
 
 [lints.rust]

@@ -657,6 +657,27 @@ mod tests {
                 expected_error: false,
                 expected_print: r"[{&& [{&& [{&& {{identifier a} = {number 1}}} {|| {{identifier a} = {number 2}}}]} {&& [{&& {{identifier c} = {number 1}}}]}]}]",
             },
+            // https://github.com/pocketbase/pocketbase/issues/5017
+            Scenario {
+                input: r#"(a='"')"#,
+                expected_error: false,
+                expected_print: r#"[{&& [{&& {{identifier a} = {text "}}}]}]"#,
+            },
+            Scenario {
+                input: r"(a='\'')",
+                expected_error: false,
+                expected_print: r"[{&& [{&& {{identifier a} = {text '}}}]}]",
+            },
+            Scenario {
+                input: r#"(a="'")"#,
+                expected_error: false,
+                expected_print: r"[{&& [{&& {{identifier a} = {text '}}}]}]",
+            },
+            Scenario {
+                input: r#"(a="\"")"#,
+                expected_error: false,
+                expected_print: r#"[{&& [{&& {{identifier a} = {text "}}}]}]"#,
+            },
         ];
 
         for (i, scenario) in scenarios.iter().enumerate() {
