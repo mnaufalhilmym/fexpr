@@ -211,7 +211,7 @@ impl Scanner {
 
         if is_text_start_char(ch) {
             self.unread();
-            return self.scan_text();
+            return self.scan_text(false);
         }
 
         if is_sign_start_char(ch) {
@@ -257,7 +257,7 @@ impl Scanner {
             buf.write_char(ch)?;
         }
 
-        Ok(Token::Ws(buf.to_string()?))
+        Ok(Token::Ws(buf.into_string()?))
     }
 
     // scanIdentifier consumes all contiguous ident chars.
@@ -282,7 +282,7 @@ impl Scanner {
             buf.write_char(ch)?
         }
 
-        let literal = buf.to_string()?;
+        let literal = buf.into_string()?;
 
         if !is_identifier(&literal) {
             return Err(Error::Invalid(format!("Invalid identifier {literal}")));
@@ -316,7 +316,7 @@ impl Scanner {
             buf.write_char(ch)?;
         }
 
-        let literal = buf.to_string()?;
+        let literal = buf.into_string()?;
 
         if !is_number(&literal) {
             return Err(Error::Invalid(format!("Invalid number {literal}")));
@@ -325,7 +325,7 @@ impl Scanner {
     }
 
     // scanText consumes all contiguous quoted text chars.
-    fn scan_text(&mut self) -> Result<Token, Error> {
+    fn scan_text(&mut self, preserve_quotes: bool) -> Result<Token, Error> {
         let mut buf = bytes::Buffer::new();
 
         // read the first char to determine the quotes type
@@ -355,11 +355,11 @@ impl Scanner {
             prev_ch = ch;
         }
 
-        let mut literal = buf.to_string()?;
+        let mut literal = buf.into_string()?;
 
         if !has_matching_quotes {
             return Err(Error::Invalid(format!("Invalid quoted text {literal}")));
-        } else {
+        } else if !preserve_quotes {
             // unquote
             literal = literal[1..literal.len() - 1].to_string();
             // remove escaped quotes prefix (aka. \)
@@ -392,7 +392,7 @@ impl Scanner {
             buf.write_char(ch)?;
         }
 
-        let literal = buf.to_string()?;
+        let literal = buf.into_string()?;
 
         if !is_sign_operator(&literal) {
             return Err(Error::Invalid(format!("Invalid sign operator {literal}")));
@@ -423,7 +423,7 @@ impl Scanner {
             buf.write_char(ch)?;
         }
 
-        let literal = buf.to_string()?;
+        let literal = buf.into_string()?;
 
         if !is_join_operator(&literal) {
             return Err(Error::Invalid(format!("Invalid join operator {literal}",)));
@@ -454,10 +454,9 @@ impl Scanner {
                 buf.write_char(ch)?;
             } else if is_text_start_char(ch) {
                 self.unread();
-                let t = self.scan_text()?;
+                let t = self.scan_text(true)?; // with quotes to preserve the exact text start/end runes
 
-                // quote the literal to preserve the text start/end chars
-                buf.write_string(&("\"".to_owned() + &t.literal() + "\""))?
+                buf.write_string(t.literal())?
             } else if ch == ')' {
                 open_groups -= 1;
 
@@ -472,7 +471,7 @@ impl Scanner {
             }
         }
 
-        let literal = buf.to_string()?;
+        let literal = buf.into_string()?;
 
         if !is_group_start_char(first_char) || open_groups > 0 {
             return Err(Error::Invalid(format!(
@@ -505,7 +504,7 @@ impl Scanner {
             buf.write_char(ch)?;
         }
 
-        let literal = buf.to_string()?;
+        let literal = buf.into_string()?;
 
         Ok(Token::Comment(literal.trim().to_owned()))
     }
@@ -539,12 +538,12 @@ fn is_whitespace_char(ch: char) -> bool {
 
 // is_letter_char checks if a char is a letter.
 fn is_letter_char(ch: char) -> bool {
-    (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')
+    ch.is_ascii_lowercase() || ch.is_ascii_uppercase()
 }
 
 // is_digit_char checks if a char is a digit.
 fn is_digit_char(ch: char) -> bool {
-    ch >= '0' && ch <= '9'
+    ch.is_ascii_digit()
 }
 
 // is_identifier_start_char checks if a char is valid identifier's first character.
@@ -595,7 +594,7 @@ fn is_join_operator(literal: &str) -> bool {
 
 // is_number checks if a literal is numeric.
 fn is_number(literal: &str) -> bool {
-    if literal == "" || literal.ends_with('.') {
+    if literal.is_empty() || literal.ends_with('.') {
         return false;
     }
 

@@ -23,12 +23,12 @@ impl Buffer {
     pub fn write_string(&mut self, str: &str) -> Result<(), Error> {
         let str_buf = str.as_bytes();
         self.buffer
-            .write(&str_buf)
+            .write(str_buf)
             .map_err(|err| Error::Buffer(err.to_string()))?;
         Ok(())
     }
 
-    pub fn to_string(self) -> Result<String, Error> {
+    pub fn into_string(self) -> Result<String, Error> {
         String::from_utf8(self.buffer).map_err(|err| Error::Buffer(err.to_string()))
     }
 }
