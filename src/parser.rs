@@ -1,5 +1,3 @@
-use std::io::BufReader;
-
 use crate::{
     error::Error,
     scanner::{JoinOp, Scanner, SignOp, Token},
@@ -107,7 +105,7 @@ enum Step {
 // Comments and whitespaces are ignored.
 pub fn parse(text: &str) -> Result<ExprGroups, Error> {
     let mut result = ExprGroups::new();
-    let mut scanner = Scanner::new(BufReader::new(text.as_bytes()))?;
+    let mut scanner = Scanner::new(text.chars().collect());
     let mut step = Step::BeforeSign;
     let mut join = JoinOp::And;
 

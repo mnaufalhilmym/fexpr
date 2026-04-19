@@ -1,7 +1,5 @@
-use std::io::{BufReader, Read};
-
 use once_cell::sync::Lazy;
-use regex::Regex;
+use regex::{Regex};
 
 use crate::{bytes, error::Error};
 
@@ -174,16 +172,13 @@ impl std::fmt::Display for Token {
 
 // Scanner represents a filter and lexical scanner.
 pub struct Scanner {
-    buffer: Vec<u8>,
+    buffer: Vec<char>,
     pos: usize,
 }
 
 impl Scanner {
-    pub fn new(mut r: BufReader<impl Read>) -> Result<Self, Error> {
-        let mut buffer = Vec::new();
-        r.read_to_end(&mut buffer)
-            .map_err(|err| Error::Buffer(err.to_string()))?;
-        Ok(Scanner { buffer, pos: 0 })
+    pub fn new(buffer: Vec<char>) -> Self {
+        Scanner { buffer, pos: 0 }
     }
 
     pub fn scan(&mut self) -> Result<Token, Error> {
@@ -257,7 +252,7 @@ impl Scanner {
             buf.write_char(ch)?;
         }
 
-        Ok(Token::Ws(buf.into_string()?))
+        Ok(Token::Ws(buf.into_string()))
     }
 
     // scanIdentifier consumes all contiguous ident chars.
@@ -282,7 +277,7 @@ impl Scanner {
             buf.write_char(ch)?
         }
 
-        let literal = buf.into_string()?;
+        let literal = buf.into_string();
 
         if !is_identifier(&literal) {
             return Err(Error::Invalid(format!("Invalid identifier {literal}")));
@@ -316,7 +311,7 @@ impl Scanner {
             buf.write_char(ch)?;
         }
 
-        let literal = buf.into_string()?;
+        let literal = buf.into_string();
 
         if !is_number(&literal) {
             return Err(Error::Invalid(format!("Invalid number {literal}")));
@@ -355,7 +350,7 @@ impl Scanner {
             prev_ch = ch;
         }
 
-        let mut literal = buf.into_string()?;
+        let mut literal = buf.into_string();
 
         if !has_matching_quotes {
             return Err(Error::Invalid(format!("Invalid quoted text {literal}")));
@@ -392,7 +387,7 @@ impl Scanner {
             buf.write_char(ch)?;
         }
 
-        let literal = buf.into_string()?;
+        let literal = buf.into_string();
 
         if !is_sign_operator(&literal) {
             return Err(Error::Invalid(format!("Invalid sign operator {literal}")));
@@ -423,7 +418,7 @@ impl Scanner {
             buf.write_char(ch)?;
         }
 
-        let literal = buf.into_string()?;
+        let literal = buf.into_string();
 
         if !is_join_operator(&literal) {
             return Err(Error::Invalid(format!("Invalid join operator {literal}",)));
@@ -471,7 +466,7 @@ impl Scanner {
             }
         }
 
-        let literal = buf.into_string()?;
+        let literal = buf.into_string();
 
         if !is_group_start_char(first_char) || open_groups > 0 {
             return Err(Error::Invalid(format!(
@@ -504,7 +499,7 @@ impl Scanner {
             buf.write_char(ch)?;
         }
 
-        let literal = buf.into_string()?;
+        let literal = buf.into_string();
 
         Ok(Token::Comment(literal.trim().to_owned()))
     }
@@ -515,7 +510,7 @@ impl Scanner {
         if self.pos == self.buffer.len() {
             return EOF;
         }
-        let ch = char::from(self.buffer[self.pos]);
+        let ch = self.buffer[self.pos];
         self.pos += 1;
         ch
     }
@@ -610,17 +605,14 @@ fn is_identifier(literal: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use std::io::BufReader;
-
     use crate::scanner::Token;
 
     use super::Scanner;
 
     #[test]
     fn test_new_scanner() {
-        let s = Scanner::new(BufReader::new("test".as_bytes())).unwrap();
-        let data_bytes = &s.buffer[0..4];
-        let data = std::str::from_utf8(data_bytes).unwrap();
+        let s = Scanner::new("test".chars().collect());
+        let data: String = s.buffer.iter().cloned().collect();
 
         assert!(
             data == "test",
@@ -1213,7 +1205,7 @@ mod tests {
         ];
 
         for (i, scenario) in test_scenarios.iter().enumerate() {
-            let mut s = Scanner::new(BufReader::new(scenario.text.as_bytes())).unwrap();
+            let mut s = Scanner::new(scenario.text.chars().collect());
 
             // scan the text tokens
             for (j, expect) in scenario.expects.iter().enumerate() {

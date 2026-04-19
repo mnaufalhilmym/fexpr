@@ -1,9 +1,7 @@
-use std::io::Write;
-
 use crate::error::Error;
 
 pub struct Buffer {
-    buffer: Vec<u8>,
+    buffer: Vec<char>,
 }
 
 impl Buffer {
@@ -12,23 +10,18 @@ impl Buffer {
     }
 
     pub fn write_char(&mut self, ch: char) -> Result<(), Error> {
-        let mut ch_buf = [0];
-        ch.encode_utf8(&mut ch_buf);
-        self.buffer
-            .write(&ch_buf)
-            .map_err(|err| Error::Buffer(err.to_string()))?;
+        self.buffer.push(ch);
         Ok(())
     }
 
     pub fn write_string(&mut self, str: &str) -> Result<(), Error> {
-        let str_buf = str.as_bytes();
-        self.buffer
-            .write(str_buf)
-            .map_err(|err| Error::Buffer(err.to_string()))?;
+        for c in str.chars() {
+            self.buffer.push(c);
+        }
         Ok(())
     }
 
-    pub fn into_string(self) -> Result<String, Error> {
-        String::from_utf8(self.buffer).map_err(|err| Error::Buffer(err.to_string()))
+    pub fn into_string(self) -> String {
+        self.buffer.iter().collect()
     }
 }
