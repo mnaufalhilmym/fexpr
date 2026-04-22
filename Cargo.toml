@@ -1,6 +1,6 @@
 [package]
-name = "fexpr"
-version = "0.1.2"
+name = "fexpr-utf8"
+version = "0.1.0"
 edition = "2021"
 license = "BSD-3-Clause"
 description = "Simple filter query language parser so that you can build SQL, Elasticsearch, etc. queries safely from user input."
